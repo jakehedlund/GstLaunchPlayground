@@ -25,6 +25,7 @@ namespace GstPlayground
             this.pbxSnap = new System.Windows.Forms.PictureBox();
             this.txtPipe = new System.Windows.Forms.TextBox();
             this.gbxControls = new System.Windows.Forms.GroupBox();
+            this.nudFlashOnTime = new System.Windows.Forms.NumericUpDown();
             this.chkLatencyEnable2 = new System.Windows.Forms.CheckBox();
             this.lblLatency = new System.Windows.Forms.Label();
             this.lblColor = new System.Windows.Forms.Label();
@@ -40,8 +41,10 @@ namespace GstPlayground
             this.latencyTesterToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.lblSsCursor = new System.Windows.Forms.ToolStripStatusLabel();
+            this.lblSsColor = new System.Windows.Forms.ToolStripStatusLabel();
             ((System.ComponentModel.ISupportInitialize)(this.pbxSnap)).BeginInit();
             this.gbxControls.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.nudFlashOnTime)).BeginInit();
             this.menuStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -49,7 +52,7 @@ namespace GstPlayground
             // btnStart
             // 
             this.btnStart.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnStart.Location = new System.Drawing.Point(6, 22);
+            this.btnStart.Location = new System.Drawing.Point(6, 16);
             this.btnStart.Name = "btnStart";
             this.btnStart.Size = new System.Drawing.Size(75, 23);
             this.btnStart.TabIndex = 0;
@@ -61,7 +64,7 @@ namespace GstPlayground
             // btnReset
             // 
             this.btnReset.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnReset.Location = new System.Drawing.Point(94, 22);
+            this.btnReset.Location = new System.Drawing.Point(94, 16);
             this.btnReset.Name = "btnReset";
             this.btnReset.Size = new System.Drawing.Size(75, 23);
             this.btnReset.TabIndex = 2;
@@ -73,7 +76,7 @@ namespace GstPlayground
             // btnSnap
             // 
             this.btnSnap.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnSnap.Location = new System.Drawing.Point(94, 51);
+            this.btnSnap.Location = new System.Drawing.Point(94, 45);
             this.btnSnap.Name = "btnSnap";
             this.btnSnap.Size = new System.Drawing.Size(75, 23);
             this.btnSnap.TabIndex = 4;
@@ -112,6 +115,7 @@ namespace GstPlayground
             // 
             this.gbxControls.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.gbxControls.Controls.Add(this.nudFlashOnTime);
             this.gbxControls.Controls.Add(this.chkLatencyEnable2);
             this.gbxControls.Controls.Add(this.lblLatency);
             this.gbxControls.Controls.Add(this.lblColor);
@@ -128,12 +132,30 @@ namespace GstPlayground
             this.gbxControls.TabStop = false;
             this.gbxControls.Text = "GST Control";
             // 
-            // btnLatencyEnable2
+            // nudFlashOnTime
+            // 
+            this.nudFlashOnTime.Location = new System.Drawing.Point(94, 113);
+            this.nudFlashOnTime.Maximum = new decimal(new int[] {
+            750,
+            0,
+            0,
+            0});
+            this.nudFlashOnTime.Name = "nudFlashOnTime";
+            this.nudFlashOnTime.Size = new System.Drawing.Size(75, 20);
+            this.nudFlashOnTime.TabIndex = 12;
+            this.nudFlashOnTime.Value = new decimal(new int[] {
+            150,
+            0,
+            0,
+            0});
+            this.nudFlashOnTime.ValueChanged += new System.EventHandler(this.nudFlashOnTime_ValueChanged);
+            // 
+            // chkLatencyEnable2
             // 
             this.chkLatencyEnable2.Appearance = System.Windows.Forms.Appearance.Button;
             this.chkLatencyEnable2.AutoSize = true;
-            this.chkLatencyEnable2.Location = new System.Drawing.Point(94, 80);
-            this.chkLatencyEnable2.Name = "btnLatencyEnable2";
+            this.chkLatencyEnable2.Location = new System.Drawing.Point(94, 74);
+            this.chkLatencyEnable2.Name = "chkLatencyEnable2";
             this.chkLatencyEnable2.Size = new System.Drawing.Size(79, 23);
             this.chkLatencyEnable2.TabIndex = 11;
             this.chkLatencyEnable2.Text = "Latency Test";
@@ -143,7 +165,7 @@ namespace GstPlayground
             // lblLatency
             // 
             this.lblLatency.AutoSize = true;
-            this.lblLatency.Location = new System.Drawing.Point(6, 119);
+            this.lblLatency.Location = new System.Drawing.Point(6, 117);
             this.lblLatency.Name = "lblLatency";
             this.lblLatency.Size = new System.Drawing.Size(45, 13);
             this.lblLatency.TabIndex = 10;
@@ -152,7 +174,7 @@ namespace GstPlayground
             // lblColor
             // 
             this.lblColor.AutoSize = true;
-            this.lblColor.Location = new System.Drawing.Point(6, 103);
+            this.lblColor.Location = new System.Drawing.Point(4, 103);
             this.lblColor.Name = "lblColor";
             this.lblColor.Size = new System.Drawing.Size(30, 13);
             this.lblColor.TabIndex = 9;
@@ -160,7 +182,7 @@ namespace GstPlayground
             // 
             // btnDumpGraph
             // 
-            this.btnDumpGraph.Location = new System.Drawing.Point(6, 51);
+            this.btnDumpGraph.Location = new System.Drawing.Point(6, 45);
             this.btnDumpGraph.Name = "btnDumpGraph";
             this.btnDumpGraph.Size = new System.Drawing.Size(75, 23);
             this.btnDumpGraph.TabIndex = 7;
@@ -239,12 +261,14 @@ namespace GstPlayground
             this.listDetectedPluginsToolStripMenuItem.Name = "listDetectedPluginsToolStripMenuItem";
             this.listDetectedPluginsToolStripMenuItem.Size = new System.Drawing.Size(189, 22);
             this.listDetectedPluginsToolStripMenuItem.Text = "List detected plugins";
+            this.listDetectedPluginsToolStripMenuItem.Click += new System.EventHandler(this.listDetectedPluginsToolStripMenuItem_Click);
             // 
             // exportAllLaunchLinesToolStripMenuItem
             // 
             this.exportAllLaunchLinesToolStripMenuItem.Name = "exportAllLaunchLinesToolStripMenuItem";
             this.exportAllLaunchLinesToolStripMenuItem.Size = new System.Drawing.Size(189, 22);
             this.exportAllLaunchLinesToolStripMenuItem.Text = "Export all launch lines";
+            this.exportAllLaunchLinesToolStripMenuItem.Click += new System.EventHandler(this.exportAllLaunchLinesToolStripMenuItem_Click);
             // 
             // latencyTesterToolStripMenuItem
             // 
@@ -255,7 +279,8 @@ namespace GstPlayground
             // statusStrip1
             // 
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.lblSsCursor});
+            this.lblSsCursor,
+            this.lblSsColor});
             this.statusStrip1.Location = new System.Drawing.Point(0, 516);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Size = new System.Drawing.Size(824, 22);
@@ -267,6 +292,12 @@ namespace GstPlayground
             this.lblSsCursor.Name = "lblSsCursor";
             this.lblSsCursor.Size = new System.Drawing.Size(42, 17);
             this.lblSsCursor.Text = "Cursor";
+            // 
+            // lblSsColor
+            // 
+            this.lblSsColor.Name = "lblSsColor";
+            this.lblSsColor.Size = new System.Drawing.Size(118, 17);
+            this.lblSsColor.Text = "toolStripStatusLabel1";
             // 
             // Form1
             // 
@@ -287,6 +318,7 @@ namespace GstPlayground
             ((System.ComponentModel.ISupportInitialize)(this.pbxSnap)).EndInit();
             this.gbxControls.ResumeLayout(false);
             this.gbxControls.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.nudFlashOnTime)).EndInit();
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             this.statusStrip1.ResumeLayout(false);
@@ -319,6 +351,8 @@ namespace GstPlayground
         private System.Windows.Forms.CheckBox chkLatencyEnable2;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel lblSsCursor;
+        private System.Windows.Forms.ToolStripStatusLabel lblSsColor;
+        private System.Windows.Forms.NumericUpDown nudFlashOnTime;
     }
 }
 

@@ -17,7 +17,7 @@ namespace GstPlayground
         public bool FlashEnabled { get; set; } = false;
         public bool OnState { get; set; } = false;
 
-        public uint FlashOnTime { get; set; } = 50; //ms
+        public uint FlashOnTime { get; set; } = 150; //ms
         public int FlashInterval { get { return timer?.Interval ?? 0; } set { timer.Interval = value; } } //ms
 
         private System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
@@ -28,9 +28,11 @@ namespace GstPlayground
         public Rectangle MeasureBox { get; set; }
         Rectangle _measBox = new Rectangle(50, 150, 50, 50);
         Pen rPen = new Pen(Color.Red, 2f);
-
+        public Color ObservedColor { get; private set; }
+        private Color avgColor;
 
         Control vidStream;
+        bool eventFired = false;
 
         public event EventHandler<Tuple<double,Color>> LatencyEvent;
 
@@ -41,7 +43,7 @@ namespace GstPlayground
             this.Location = c.Location;
             this.Size = c.Size;
             this.Visible = false;
-            this.BackColor = Color.Teal;
+            this.BackColor = Color.Green;
             base.Enabled = true;
 
             timer.Tick += Timer_Tick;
@@ -71,24 +73,39 @@ namespace GstPlayground
         {
             while (true)
             {
-                var elapsed = DateTime.Now - lastFlash; 
-                if (elapsed.TotalMilliseconds > FlashOnTime && OnState)
+                try
                 {
-                    Flash(false);
-                    //Thread.Sleep((int)(this.FlashInterval - FlashOnTime - 50));
-                }
-                else if (FlashEnabled && !OnState)
-                {
-                    NativeMethods.GetCursorPos(ref cursPoint);
-                    Color c = ExtensionMethods.GetColorAt(cursPoint); 
-                    if(c.B == c.G  && c.R < 0x10 && c.B > 0x20)
+                    var elapsed = DateTime.Now - lastFlash;
+                    if (elapsed.TotalMilliseconds > FlashOnTime && OnState)
                     {
-                        LatencyEvent?.Invoke(this, new Tuple<double, Color>(sw.ElapsedMilliseconds, c));
+                        Flash(false);
+                        NativeMethods.GetCursorPos(ref cursPoint);
+                        avgColor = ExtensionMethods.GetColorAt(cursPoint);
+                        //Thread.Sleep((int)(this.FlashInterval - FlashOnTime - 50));
+                    }
+                    else if (FlashEnabled && !OnState)
+                    {
+                        NativeMethods.GetCursorPos(ref cursPoint);
+                        Color c = ExtensionMethods.GetColorAt(cursPoint);
+                        this.ObservedColor = c;
+                        //if(c.R < 0x20 && c.B > 0x60 && c.G > 0x50 && c.B < 0xC0 && c.G < 0xC0) //Teal
+                        if((avgColor.G < (c.G - 10)) || (c.R < avgColor.R && c.B < avgColor.B)) //Green
+                        {
+                            if (!eventFired)
+                            {
+                                LatencyEvent?.Invoke(this, new Tuple<double, Color>(sw.ElapsedMilliseconds, c));
+                                eventFired = true;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        //Thread.Sleep(10); 
                     }
                 }
-                else
+                catch (Exception ex)
                 {
-                    //Thread.Sleep(10); 
+                    Console.WriteLine("Failed to get color. " + ex.Message); 
                 }
                 Thread.Sleep(1); 
             }
@@ -104,16 +121,16 @@ namespace GstPlayground
         {
             base.OnPaint(e);
 
-            //if (Enabled)
-            //{
-            //    Graphics g = e.Graphics;
-            //    g.DrawRectangle(rPen, _measBox);
-            //}
+            if (FlashEnabled)
+            {
+                Graphics g = e.Graphics;
+                g.DrawRectangle(rPen, _measBox);
+            }
         }
 
         protected override void OnPaintBackground(PaintEventArgs e)
         {
-            //base.OnPaintBackground(e);
+            base.OnPaintBackground(e);
         }
 
         public void Start()
@@ -121,7 +138,7 @@ namespace GstPlayground
             this.FlashEnabled = true;
             timer.Start();
             lastFlash = DateTime.Now;
-            OnState = true;
+            //OnState = true;
             if (tmrThread.ThreadState.HasFlag(ThreadState.Unstarted)) 
             {
                 tmrThread.Start(); 
@@ -141,7 +158,8 @@ namespace GstPlayground
             if (on)
             {
                 lastFlash = DateTime.Now;
-                sw.Restart(); 
+                sw.Restart();
+                eventFired = false;
             }
             OnState = on;
 

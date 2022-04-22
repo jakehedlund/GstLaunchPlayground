@@ -565,23 +565,10 @@ namespace GstPlayground
             Element q = ElementFactory.Make("queue");
             Element q2 = ElementFactory.Make("queue");
             Element t = ElementFactory.Make("tee");
-            Element fake = ElementFactory.Make("fakesink"); 
-
-            var elts = ElementFactory.ListGetElements((ulong)
-                (FactoryTypes.GST_ELEMENT_FACTORY_TYPE_ENCODER | FactoryTypes.GST_ELEMENT_FACTORY_TYPE_MEDIA_IMAGE), Rank.None);
-            GLib.List l = new GLib.List(elts, typeof(Element), true, true);
-            var filtered = ElementFactory.ListFilter(l, caps, PadDirection.Src, false);
+            Element fake = ElementFactory.Make("fakesink");
 
             sDbg.WriteLine("Converting to: " + caps.ToString());
             sDbg.WriteLine("\tFrom: " + sample.Caps);
-            sDbg.Write("Compatible encoder factories: ");
-
-            foreach (var f in filtered)
-            {
-                sDbg.Write(f.Name + ", ");
-            }
-            sDbg.WriteLine("");
-            l.Dispose(); 
 
             Gst.App.AppSrc src = appSrc as Gst.App.AppSrc;
             Gst.App.AppSink sink = appSink as Gst.App.AppSink;
@@ -694,11 +681,12 @@ namespace GstPlayground
         private void pnlGst_MouseMove(object sender, MouseEventArgs e)
         {
             lblSsCursor.Text = $"({e.Location.X},{e.Location.Y}) - [{e.Button}]";
+            lblSsColor.Text = latencyPanel1.ObservedColor.ToString(); 
         }
 
         private void chkLatencyEnable_CheckedChanged(object sender, EventArgs e)
         {
-            if (chkLatencyEnable2.Checked)
+            if (!chkLatencyEnable2.Checked)
                 latencyPanel1.Stop();
             else
                 latencyPanel1.Start();
@@ -706,12 +694,12 @@ namespace GstPlayground
 
         private void pnlGst_MouseDown(object sender, MouseEventArgs e)
         {
-            sDbg.WriteLine("Mouse down.");
+            sDbg.WriteLine("Mouse down: " + e.Button);
         }
 
         private void pnlGst_MouseClick(object sender, MouseEventArgs e)
         {
-            sDbg.WriteLine("Mouse click."); 
+            sDbg.WriteLine("Mouse click: " + e.Button); 
         }
 
         public string SanitizeLaunchLine(string ll)
@@ -722,6 +710,83 @@ namespace GstPlayground
             ll = Regex.Replace(ll, exePattern, ""); 
             ll = Regex.Replace(ll, pattern, " ");
             return ll;
+        }
+
+        private void listDetectedPluginsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Form f = new Form() { Size = new Size(500, 400), StartPosition = FormStartPosition.CenterParent};
+            Panel p = new Panel() { AutoScroll = true, Dock = DockStyle.Fill, Padding = new Padding(10) };
+            TextBox t = new TextBox() { Dock = DockStyle.Fill, 
+                Multiline = true, 
+                ReadOnly = true, 
+                ScrollBars = ScrollBars.Vertical,
+                Margin = new Padding(15) }; 
+            f.Controls.Add(p);
+            p.Controls.Add(t);
+
+            var elts = ElementFactory.ListGetElements((ulong)FactoryTypes.GST_ELEMENT_FACTORY_TYPE_ANY, Rank.None);
+            
+            string str = string.Join(", ", elts.Select(elt => elt.Name));
+
+            t.Text = str;
+            f.Text = $"All {elts.Length} factories";
+            f.ShowDialog(this);
+        }
+
+        private void exportAllLaunchLinesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using(var s = new SaveFileDialog())
+            {
+                s.InitialDirectory = Directory.GetCurrentDirectory();
+                s.DefaultExt = ".txt";
+                s.FileName = "my-launch-lines.txt";
+
+                if (s.ShowDialog(this) == DialogResult.OK)
+                {
+                    try
+                    {
+                        StringBuilder sb = new StringBuilder();
+                        foreach (string k in launchDict.Keys)
+                        {
+                            sb.AppendLine(k + ": " + launchDict[k]);
+                        }
+
+                        using (var fs = new FileStream(s.FileName, FileMode.OpenOrCreate, FileAccess.ReadWrite))
+                        using (var sw = new StreamWriter(fs))
+                        {
+                            sw.Write(sb.ToString());
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        sDbg.WriteLine("Failed to save file! " + ex.Message); 
+                    }
+                }
+            }
+        }
+
+        private void nudFlashOnTime_ValueChanged(object sender, EventArgs e)
+        {
+            latencyPanel1.FlashOnTime = (uint)nudFlashOnTime.Value;
+        }
+
+        public ElementFactory[] GetElementFactories(Caps caps, FactoryTypes types, PadDirection dir = PadDirection.Src)
+        {
+            var elts = ElementFactory.ListGetElements((ulong)
+                (FactoryTypes.GST_ELEMENT_FACTORY_TYPE_ENCODER | FactoryTypes.GST_ELEMENT_FACTORY_TYPE_MEDIA_IMAGE), Rank.None);
+            GLib.List l = new GLib.List(elts, typeof(Element), true, true);
+            var filtered = ElementFactory.ListFilter(l, caps, dir, false);
+
+            sDbg.Write($"Compatible with {caps} encoder factories: ");
+
+            foreach (var f in filtered)
+            {
+                sDbg.Write(f.Name + ", ");
+            }
+            sDbg.WriteLine("");
+            l.Dispose();
+
+            return filtered;
         }
     }
 

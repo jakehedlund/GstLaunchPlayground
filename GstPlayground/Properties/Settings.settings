@@ -1,0 +1,19 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="GstPlayground.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="upgradeNeeded" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="launchDict" Type="GstPlayground.SerializableStringDictionary" Scope="User">
+      <Value Profile="(Default)">
+                    &lt;SerializableStringDictionary&gt;
+                        &lt;Pair Name="testsrc" Value="videotestsrc ! queue ! videoconvert ! d3d11videosink name=prevSink" /&gt;
+                        &lt;Pair Name="testsrcauto" Value="videotestsrc ! queue ! videoconvert ! autovideosink name=prevSink" /&gt;
+                        &lt;Pair Name="rtsp1" Value="gst-launch-1.0.exe rtspsrc location=rtsp://192.168.0.226:554/Videoinput/1/h264/1 latency=0 drop-on-latency=true ! rtph264depay ! h264parse ! d3d11h264dec ! videoconvert ! autovideosink" /&gt;
+                        &lt;Pair Name="d3dball" Value="d3d11compositor name=c ! d3d11videosink videotestsrc ! video/x-raw,width=320,height=240 ! c. videotestsrc pattern=ball ! video/x-raw,width=100,height=100 ! c." /&gt;
+                    &lt;/SerializableStringDictionary&gt;
+                </Value>
+    </Setting>
+  </Settings>
+</SettingsFile>

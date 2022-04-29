@@ -39,9 +39,12 @@ namespace GstPlayground
             this.listDetectedPluginsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exportAllLaunchLinesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.latencyTesterToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.openConsoleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.lblSsCursor = new System.Windows.Forms.ToolStripStatusLabel();
             this.lblSsColor = new System.Windows.Forms.ToolStripStatusLabel();
+            this.importLaunchLinesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             ((System.ComponentModel.ISupportInitialize)(this.pbxSnap)).BeginInit();
             this.gbxControls.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nudFlashOnTime)).BeginInit();
@@ -143,6 +146,7 @@ namespace GstPlayground
             this.nudFlashOnTime.Name = "nudFlashOnTime";
             this.nudFlashOnTime.Size = new System.Drawing.Size(75, 20);
             this.nudFlashOnTime.TabIndex = 12;
+            this.toolTip1.SetToolTip(this.nudFlashOnTime, "Flash time.");
             this.nudFlashOnTime.Value = new decimal(new int[] {
             150,
             0,
@@ -174,7 +178,7 @@ namespace GstPlayground
             // lblColor
             // 
             this.lblColor.AutoSize = true;
-            this.lblColor.Location = new System.Drawing.Point(4, 103);
+            this.lblColor.Location = new System.Drawing.Point(8, 100);
             this.lblColor.Name = "lblColor";
             this.lblColor.Size = new System.Drawing.Size(30, 13);
             this.lblColor.TabIndex = 9;
@@ -249,8 +253,11 @@ namespace GstPlayground
             // 
             this.toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.listDetectedPluginsToolStripMenuItem,
+            this.latencyTesterToolStripMenuItem,
+            this.openConsoleToolStripMenuItem,
+            this.toolStripSeparator1,
             this.exportAllLaunchLinesToolStripMenuItem,
-            this.latencyTesterToolStripMenuItem});
+            this.importLaunchLinesToolStripMenuItem});
             this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
             this.toolsToolStripMenuItem.Size = new System.Drawing.Size(46, 20);
             this.toolsToolStripMenuItem.Text = "Tools";
@@ -259,22 +266,30 @@ namespace GstPlayground
             // listDetectedPluginsToolStripMenuItem
             // 
             this.listDetectedPluginsToolStripMenuItem.Name = "listDetectedPluginsToolStripMenuItem";
-            this.listDetectedPluginsToolStripMenuItem.Size = new System.Drawing.Size(189, 22);
+            this.listDetectedPluginsToolStripMenuItem.Size = new System.Drawing.Size(185, 22);
             this.listDetectedPluginsToolStripMenuItem.Text = "List detected plugins";
             this.listDetectedPluginsToolStripMenuItem.Click += new System.EventHandler(this.listDetectedPluginsToolStripMenuItem_Click);
             // 
             // exportAllLaunchLinesToolStripMenuItem
             // 
             this.exportAllLaunchLinesToolStripMenuItem.Name = "exportAllLaunchLinesToolStripMenuItem";
-            this.exportAllLaunchLinesToolStripMenuItem.Size = new System.Drawing.Size(189, 22);
-            this.exportAllLaunchLinesToolStripMenuItem.Text = "Export all launch lines";
+            this.exportAllLaunchLinesToolStripMenuItem.Size = new System.Drawing.Size(185, 22);
+            this.exportAllLaunchLinesToolStripMenuItem.Text = "Export launch lines...";
             this.exportAllLaunchLinesToolStripMenuItem.Click += new System.EventHandler(this.exportAllLaunchLinesToolStripMenuItem_Click);
             // 
             // latencyTesterToolStripMenuItem
             // 
             this.latencyTesterToolStripMenuItem.Name = "latencyTesterToolStripMenuItem";
-            this.latencyTesterToolStripMenuItem.Size = new System.Drawing.Size(189, 22);
+            this.latencyTesterToolStripMenuItem.Size = new System.Drawing.Size(185, 22);
             this.latencyTesterToolStripMenuItem.Text = "Latency tester";
+            this.latencyTesterToolStripMenuItem.Click += new System.EventHandler(this.latencyTesterToolStripMenuItem_Click);
+            // 
+            // openConsoleToolStripMenuItem
+            // 
+            this.openConsoleToolStripMenuItem.Name = "openConsoleToolStripMenuItem";
+            this.openConsoleToolStripMenuItem.Size = new System.Drawing.Size(185, 22);
+            this.openConsoleToolStripMenuItem.Text = "Open Console";
+            this.openConsoleToolStripMenuItem.Click += new System.EventHandler(this.openConsoleToolStripMenuItem_Click);
             // 
             // statusStrip1
             // 
@@ -298,6 +313,18 @@ namespace GstPlayground
             this.lblSsColor.Name = "lblSsColor";
             this.lblSsColor.Size = new System.Drawing.Size(118, 17);
             this.lblSsColor.Text = "toolStripStatusLabel1";
+            // 
+            // importLaunchLinesToolStripMenuItem
+            // 
+            this.importLaunchLinesToolStripMenuItem.Name = "importLaunchLinesToolStripMenuItem";
+            this.importLaunchLinesToolStripMenuItem.Size = new System.Drawing.Size(185, 22);
+            this.importLaunchLinesToolStripMenuItem.Text = "Import launch lines...";
+            this.importLaunchLinesToolStripMenuItem.Click += new System.EventHandler(this.importLaunchLinesToolStripMenuItem_Click);
+            // 
+            // toolStripSeparator1
+            // 
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Size = new System.Drawing.Size(182, 6);
             // 
             // Form1
             // 
@@ -353,6 +380,9 @@ namespace GstPlayground
         private System.Windows.Forms.ToolStripStatusLabel lblSsCursor;
         private System.Windows.Forms.ToolStripStatusLabel lblSsColor;
         private System.Windows.Forms.NumericUpDown nudFlashOnTime;
+        private System.Windows.Forms.ToolStripMenuItem openConsoleToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem importLaunchLinesToolStripMenuItem;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
     }
 }
 

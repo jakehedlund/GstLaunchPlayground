@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.ExceptionServices;
@@ -10,6 +11,13 @@ namespace GstPlayground
 {
     static class Program
     {
+        public static string gstPathVar = "GSTREAMER_1_0_ROOT_MINGW_X86_64"; //GSTREAMER_1_0_ROOT_MSVC_X86_64
+        public static string gstDebug = "*:2,GST_STATES:2,GST_REFCOUNTING:2,GST_CAPS:2,d3dvideosink:2," +
+                "videoscale:2,appsrc:2,jpegenc:2,convertframe:2";
+
+        // "*:4,GST_STATES:5,d3dvideosink:2,videodecoder:2,x264enc:2"
+        // "*:4,GST_STATES:2,videodecoder:1,d3dvideosink:2,wasapisrc:2,queue:5,pad:5,probe:5"
+
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
@@ -25,6 +33,8 @@ namespace GstPlayground
 
             try
             {
+                Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.High;
+                Process.GetCurrentProcess().PriorityBoostEnabled = true;
                 FindGst(); 
                 Application.Run(new Form1());
             }
@@ -51,18 +61,13 @@ namespace GstPlayground
         private static void FindGst()
         {
             var path = Environment.GetEnvironmentVariable("Path");
-            //var pp = Path.Combine(Environment.GetEnvironmentVariable("GSTREAMER_1_0_ROOT_MSVC_X86_64"), "bin");
-            var pp = Path.Combine(Environment.GetEnvironmentVariable("GSTREAMER_1_0_ROOT_MINGW_X86_64"), "bin");
+            var pp = Path.Combine(Environment.GetEnvironmentVariable(gstPathVar), "bin");
 
             Environment.SetEnvironmentVariable("Path", pp + ";" + path);
             System.Diagnostics.Debug.WriteLine("Path added: " + pp);
 
             //Environment.SetEnvironmentVariable("GST_DEBUG_NO_COLOR", "1");
-            //Environment.SetEnvironmentVariable("GST_DEBUG", "*:4,GST_STATES:5,d3dvideosink:2,videodecoder:2,x264enc:2");
-            //Environment.SetEnvironmentVariable("GST_DEBUG", "*:4,GST_STATES:2,videodecoder:1,d3dvideosink:2,wasapisrc:2,queue:5,pad:5,probe:5");
-            //Environment.SetEnvironmentVariable("GST_DEBUG", "GST_REFCOUNTING:7");
-            Environment.SetEnvironmentVariable("GST_DEBUG", "*:4,GST_STATES:2,GST_REFCOUNTING:2,GST_CAPS:2,d3dvideosink:2," +
-                "videoscale:6,appsrc:6,jpegenc:6,convertframe:6");
+            Environment.SetEnvironmentVariable("GST_DEBUG", gstDebug);
         }
     }
 }

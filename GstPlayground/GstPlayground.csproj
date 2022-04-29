@@ -22,6 +22,9 @@
   </PropertyGroup>
   <PropertyGroup>
     <StartupObject></StartupObject>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <AssemblyVersion>1.0.2</AssemblyVersion>
+    <FileVersion>1.0.2</FileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net5.0-windows|AnyCPU'">
     <Prefer32Bit>False</Prefer32Bit>

@@ -64,5 +64,28 @@ namespace GstPlayground
 
             return screenPixel.GetPixel(0, 0);
         }
+
+        /// <summary>
+        /// Returns true if Color c is greener than another color. 
+        /// </summary>
+        /// <param name="c"></param>
+        /// <param name="thanThis"></param>
+        /// <param name="threshold"></param>
+        /// <returns></returns>
+        public static bool IsGreener(this Color c, Color thanThis, int threshold = 2)
+        {
+            //bool ret = false;
+
+            int diff = c.G - thanThis.G;
+            if (diff > threshold)
+                return true;
+
+            if (c.R < (thanThis.R - threshold) && c.B < (thanThis.B - threshold))
+            {
+                return true;
+            }
+
+            return false;
+        }
     }
 }

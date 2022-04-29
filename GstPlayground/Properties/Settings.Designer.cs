@@ -37,14 +37,25 @@ namespace GstPlayground.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute(@"
-                    <SerializableStringDictionary>
-                        <Pair Name=""testsrc"" Value=""videotestsrc ! queue ! videoconvert ! d3d11videosink name=prevSink"" />
-                        <Pair Name=""testsrcauto"" Value=""videotestsrc ! queue ! videoconvert ! autovideosink name=prevSink"" />
-                        <Pair Name=""rtsp1"" Value=""gst-launch-1.0.exe rtspsrc location=rtsp://192.168.0.226:554/Videoinput/1/h264/1 latency=0 drop-on-latency=true ! rtph264depay ! h264parse ! d3d11h264dec ! videoconvert ! autovideosink"" />
-                        <Pair Name=""d3dball"" Value=""d3d11compositor name=c ! d3d11videosink videotestsrc ! video/x-raw,width=320,height=240 ! c. videotestsrc pattern=ball ! video/x-raw,width=100,height=100 ! c."" />
-                    </SerializableStringDictionary>
-                ")]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int lastIdx {
+            get {
+                return ((int)(this["lastIdx"]));
+            }
+            set {
+                this["lastIdx"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute(@"<?xml version=""1.0"" encoding=""utf-16""?>
+<SerializableStringDictionary>
+  <Pair Name=""d3dball"" Value=""d3d11compositor name=c ! d3d11videosink videotestsrc ! video/x-raw,width=320,height=240 ! c. videotestsrc pattern=ball ! video/x-raw,width=100,height=100 ! c."" />
+  <Pair Name=""testsrcauto"" Value=""videotestsrc ! queue ! videoconvert ! autovideosink name=prevSink"" />
+  <Pair Name=""testsrc"" Value=""videotestsrc ! queue ! videoconvert ! d3d11videosink name=prevSink"" />
+  <Pair Name=""rtsp1"" Value=""gst-launch-1.0.exe rtspsrc location=rtsp://192.168.0.226:554/Videoinput/1/h264/1 latency=0 drop-on-latency=true ! rtph264depay ! h264parse ! d3d11h264dec ! videoconvert ! autovideosink"" />
+</SerializableStringDictionary>")]
         public global::GstPlayground.SerializableStringDictionary launchDict {
             get {
                 return ((global::GstPlayground.SerializableStringDictionary)(this["launchDict"]));

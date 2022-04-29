@@ -31,6 +31,7 @@ namespace GstPlayground
         SerializableStringDictionary launchDict = new SerializableStringDictionary(); 
         LatencyPanel latencyPanel1;
 
+        string launchDelim = ";";
 
         public Form1()
         {
@@ -53,8 +54,11 @@ namespace GstPlayground
                 lblLatency.Invoke(new Action<object, Tuple<double,Color>>(LatencyPanel1_LatencyEvent), sender, e);
                 return;
             }
+
+            Color c = e.Item2; 
             lblLatency.Text = e.Item1.ToString("0.00") + " ms";
-            lblColor.Text = e.Item2.ToString();
+            lblColor.Text = $"(R:{c.R},G:{c.G},B:{c.B})";
+
             //Point curs = new Point();
             //NativeMethods.GetCursorPos(ref curs);
             //lblColor.Text = ExtensionMethods.GetColorAt(curs).ToString();
@@ -76,10 +80,13 @@ namespace GstPlayground
 
             launchDict = Settings.Default.launchDict;
 
+            int idx = Settings.Default.lastIdx;
+            if (idx < 0 || idx >= launchDict.Count)
+                idx = 0;
 
             cmbLaunch.BeginUpdate();
             cmbLaunch.Items.AddRange(launchDict.Keys.Cast<string>().ToArray());
-            cmbLaunch.SelectedIndex = 0;
+            cmbLaunch.SelectedIndex = idx;
             cmbLaunch.EndUpdate(); 
         }
 
@@ -135,22 +142,11 @@ namespace GstPlayground
                 if(glibLoop is null)
                     glibLoop = new GLib.MainLoop();
 
-                //glibThread = new Thread(() =>
-                //{
-                //    try
-                //    {
-                //        glibLoop.Run();
-                //    }
-                //    catch (Exception ex)
-                //    {
-                //        Console.WriteLine("ERROR IN GLIB.RUN!! " + ex.Message);
-                //    }
-                //})
                 glibThread = new Thread(glibLoop.Run)
                 {
                     IsBackground = true,
                     Name = "GlibThread " + System.DateTime.Now.ToString("s"),
-                    Priority = ThreadPriority.AboveNormal
+                    //Priority = ThreadPriority.AboveNormal
                 };
 
                 //glibThread.Start();
@@ -172,10 +168,11 @@ namespace GstPlayground
                 glibThread.Start();
                 mpipe = Gst.Parse.Launch(SanitizeLaunchLine(txtPipe.Text)) as Pipeline;
 
-                var bus = mpipe.Bus; 
+                var bus = mpipe.Bus;
 
                 //GstUtil.DumpGraph(mPipeline, "after_parse.dot");
                 //GLib.Timeout.Add(100, queryStats);
+                GLib.ExceptionManager.UnhandledException -= this.exceptionManager_UnhandledException;
                 GLib.ExceptionManager.UnhandledException += this.exceptionManager_UnhandledException;
                 //GLib.Timeout.Add(100, SetOverlayGst); 
 
@@ -183,6 +180,7 @@ namespace GstPlayground
                 bus.SyncMessage += Bus_SyncMessage;
                 bus.AddSignalWatch();
                 bus.Message += HandleMessage;
+                sDbg.WriteLine("reset gst."); 
                 //bus.Dispose(); 
             }
             catch (BadImageFormatException bad)
@@ -283,6 +281,7 @@ namespace GstPlayground
         private void Bus_SyncMessage(object o, SyncMessageArgs args)
         {
             if (Gst.Video.Global.IsVideoOverlayPrepareWindowHandleMessage(args.Message))
+            //if(false)
             {
                 Gst.Video.VideoOverlayAdapter adapter;
                 Element src = args.Message.Src as Element;
@@ -314,7 +313,8 @@ namespace GstPlayground
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            Settings.Default.launchDict = launchDict; 
+            Settings.Default.launchDict = launchDict;
+            Settings.Default.lastIdx = cmbLaunch.SelectedIndex; 
 
             Settings.Default.Save(); 
 
@@ -395,8 +395,8 @@ namespace GstPlayground
 
                     if (samp != null)
                     {
-                        //var jpg = Gst.Video.Global.VideoConvertSample(samp, Caps.FromString("image/jpeg"), 1000000000);
-                        var jpg2 = myConvertSample(samp, Caps.FromString("image/jpeg"), (ulong)(2 * 1E9));
+                        var jpg2 = Gst.Video.Global.VideoConvertSample(samp, Caps.FromString("image/jpeg"), 1000000000);
+                        //var jpg2 = myConvertSample(samp, Caps.FromString("image/jpeg"), (ulong)(2 * 1E9));
                         //var j3 = myConvertSample(s, Caps.FromString("image/jpeg"), (ulong)(2 * 1e9));
 
                         if (jpg2 != null)
@@ -505,6 +505,10 @@ namespace GstPlayground
                 cmbLaunch.Items.Add(key);
             }
 
+            Settings.Default.launchDict = launchDict;
+            Settings.Default.lastIdx = cmbLaunch.SelectedIndex;
+
+            Settings.Default.Save();
         }
 
         private void cmbLaunch_KeyDown(object sender, KeyEventArgs e)
@@ -547,9 +551,9 @@ namespace GstPlayground
             }
         }
 
-        public Sample myConvertSample(Sample sample, Caps caps, ulong timeout)
+        public Sample myConvertSample(Sample sample, Caps to_caps, ulong timeout)
         {
-            Element appSrc, vidConv, jpegEnc, appSink;
+            Element appSrc, vidConv, jpegEnc, appSink, dl;
             //Element vidScale;
 
             Sample ret = null;
@@ -557,17 +561,12 @@ namespace GstPlayground
             convPipe = new Pipeline();
 
             appSrc = ElementFactory.Make("appsrc");
+            dl = ElementFactory.Make("d3d11download"); 
             vidConv = ElementFactory.Make("videoconvert");
             jpegEnc = ElementFactory.Make("jpegenc");
             appSink = ElementFactory.Make("appsink");
-            //vidScale = ElementFactory.Make("videoscale");
-            Element dl = ElementFactory.Make("d3d11download"); 
-            Element q = ElementFactory.Make("queue");
-            Element q2 = ElementFactory.Make("queue");
-            Element t = ElementFactory.Make("tee");
-            Element fake = ElementFactory.Make("fakesink");
 
-            sDbg.WriteLine("Converting to: " + caps.ToString());
+            sDbg.WriteLine("Converting to: " + to_caps.ToString());
             sDbg.WriteLine("\tFrom: " + sample.Caps);
 
             Gst.App.AppSrc src = appSrc as Gst.App.AppSrc;
@@ -575,7 +574,7 @@ namespace GstPlayground
 
             src.EmitSignals = true;
             sink.EmitSignals = true;
-            sink["caps"] = caps;
+            sink["caps"] = to_caps;
             src["caps"] = sample.Caps;
 
             convPipe.Add(appSrc, dl, vidConv, jpegEnc, appSink);
@@ -702,7 +701,7 @@ namespace GstPlayground
             sDbg.WriteLine("Mouse click: " + e.Button); 
         }
 
-        public string SanitizeLaunchLine(string ll)
+        public static string SanitizeLaunchLine(string ll)
         {
             ll = ll.Trim();
             string exePattern = @"gst-launch-1.0(\.exe)?";
@@ -716,21 +715,35 @@ namespace GstPlayground
         {
             Form f = new Form() { Size = new Size(500, 400), StartPosition = FormStartPosition.CenterParent};
             Panel p = new Panel() { AutoScroll = true, Dock = DockStyle.Fill, Padding = new Padding(10) };
-            TextBox t = new TextBox() { Dock = DockStyle.Fill, 
+            TextBox t = new TextBox() { 
+                Dock = DockStyle.Fill, 
                 Multiline = true, 
                 ReadOnly = true, 
                 ScrollBars = ScrollBars.Vertical,
                 Margin = new Padding(15) }; 
             f.Controls.Add(p);
             p.Controls.Add(t);
+            string str = ""; 
 
-            var elts = ElementFactory.ListGetElements((ulong)FactoryTypes.GST_ELEMENT_FACTORY_TYPE_ANY, Rank.None);
+            if (Gst.Global.IsInitialized)
+            {
+                var elts = ElementFactory.ListGetElements((ulong)FactoryTypes.GST_ELEMENT_FACTORY_TYPE_ANY, Rank.None);
+                str = string.Join(", ", elts.Select(elt => elt.Name));
+                f.Text = $"All {elts.Length} factories";
+            }
+            else
+            {
+                str = "Please first initialize GStreamer by running a launch line.";
+                f.Text = "Uninitialized"; 
+            }
             
-            string str = string.Join(", ", elts.Select(elt => elt.Name));
 
             t.Text = str;
-            f.Text = $"All {elts.Length} factories";
             f.ShowDialog(this);
+
+            t.Dispose();
+            p.Dispose();
+            f.Dispose();
         }
 
         private void exportAllLaunchLinesToolStripMenuItem_Click(object sender, EventArgs e)
@@ -748,7 +761,7 @@ namespace GstPlayground
                         StringBuilder sb = new StringBuilder();
                         foreach (string k in launchDict.Keys)
                         {
-                            sb.AppendLine(k + ": " + launchDict[k]);
+                            sb.AppendLine(k + launchDelim + " " + SanitizeLaunchLine(launchDict[k]));
                         }
 
                         using (var fs = new FileStream(s.FileName, FileMode.OpenOrCreate, FileAccess.ReadWrite))
@@ -764,13 +777,68 @@ namespace GstPlayground
                 }
             }
         }
+        private void importLaunchLinesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (OpenFileDialog fd = new OpenFileDialog())
+                {
+                    fd.InitialDirectory = Directory.GetCurrentDirectory();
+                    fd.DefaultExt = ".txt";
+                    fd.FileName = "my-launch-lines.txt";
+
+                    if (fd.ShowDialog(this) == DialogResult.OK)
+                    {
+                        foreach (var line in File.ReadLines(fd.FileName))
+                        {
+                            var split = line.Split(launchDelim.ToCharArray(), 2, StringSplitOptions.None);
+                            var key = split[0];
+                            var val = split[1].TrimStart();
+
+                            if (!launchDict.ContainsKey(key))
+                            {
+                                launchDict.Add(key, val);
+                                cmbLaunch.Items.Add(key);
+                            }
+                        }
+                        
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading file: " + ex.Message); 
+            }
+        }
 
         private void nudFlashOnTime_ValueChanged(object sender, EventArgs e)
         {
             latencyPanel1.FlashOnTime = (uint)nudFlashOnTime.Value;
         }
 
-        public ElementFactory[] GetElementFactories(Caps caps, FactoryTypes types, PadDirection dir = PadDirection.Src)
+        private void latencyTesterToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append("Use this tool to test a video camera's glass-to-glass (realtime) latency. " + Environment.NewLine);
+            sb.AppendLine("0. Start a pipeline/launchline for a video camera in your posession.");
+            sb.AppendLine("1. Point camera at your screen and move the window so it can be seen by the camera.");
+            sb.AppendLine("2. Move cursor to hover over an area that changes color on the streamed image of the stream (first nested video image).");
+            sb.AppendLine("3. Observe reported latency on the right side of the app.");
+
+            var ret = MessageBox.Show(this, sb.ToString(), "Latency test", MessageBoxButtons.OKCancel, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1);
+
+            chkLatencyEnable2.Checked = DialogResult.OK == ret;
+
+        }
+
+        private void openConsoleToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+            Process.Start("cmd.exe", @"/k cd " + Environment.GetEnvironmentVariable(Program.gstPathVar));
+        }
+
+
+        public static ElementFactory[] GetElementFactories(Caps caps, FactoryTypes types, PadDirection dir = PadDirection.Src)
         {
             var elts = ElementFactory.ListGetElements((ulong)
                 (FactoryTypes.GST_ELEMENT_FACTORY_TYPE_ENCODER | FactoryTypes.GST_ELEMENT_FACTORY_TYPE_MEDIA_IMAGE), Rank.None);

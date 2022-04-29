@@ -20,6 +20,8 @@ namespace GstPlayground
         public uint FlashOnTime { get; set; } = 150; //ms
         public int FlashInterval { get { return timer?.Interval ?? 0; } set { timer.Interval = value; } } //ms
 
+        public int MinLatency { get; set; } = 20; //ms
+
         private System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
         private DateTime lastFlash = DateTime.Now;
         private System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
@@ -33,6 +35,8 @@ namespace GstPlayground
 
         Control vidStream;
         bool eventFired = false;
+        
+
 
         public event EventHandler<Tuple<double,Color>> LatencyEvent;
 
@@ -89,7 +93,8 @@ namespace GstPlayground
                         Color c = ExtensionMethods.GetColorAt(cursPoint);
                         this.ObservedColor = c;
                         //if(c.R < 0x20 && c.B > 0x60 && c.G > 0x50 && c.B < 0xC0 && c.G < 0xC0) //Teal
-                        if((avgColor.G < (c.G - 10)) || (c.R < avgColor.R && c.B < avgColor.B)) //Green
+                        //if((avgColor.G < (c.G - 10)) || (c.R < avgColor.R && c.B < avgColor.B)) //Green
+                        if(sw.ElapsedMilliseconds > MinLatency && c.IsGreener(avgColor, 12))
                         {
                             if (!eventFired)
                             {
@@ -107,30 +112,13 @@ namespace GstPlayground
                 {
                     Console.WriteLine("Failed to get color. " + ex.Message); 
                 }
-                Thread.Sleep(1); 
+                Thread.Sleep(0); 
             }
         }
 
         private void Timer_Tick(object sender, EventArgs e)
         {
             Flash(true); 
-        }
-
-
-        protected override void OnPaint(PaintEventArgs e)
-        {
-            base.OnPaint(e);
-
-            if (FlashEnabled)
-            {
-                Graphics g = e.Graphics;
-                g.DrawRectangle(rPen, _measBox);
-            }
-        }
-
-        protected override void OnPaintBackground(PaintEventArgs e)
-        {
-            base.OnPaintBackground(e);
         }
 
         public void Start()
@@ -155,22 +143,23 @@ namespace GstPlayground
 
         private void Flash(bool on)
         {
+            if (this.InvokeRequired)
+            {
+                this.Invoke(new Action<bool>(Flash), on);
+                return;
+            }
+
+            this.Visible = on;
+            this.Invalidate();
+            this.Refresh();
             if (on)
             {
                 lastFlash = DateTime.Now;
                 sw.Restart();
                 eventFired = false;
             }
-            OnState = on;
 
-            if (this.InvokeRequired)
-            {
-                this.Invoke(new Action<bool>(Flash), on);
-                return;
-            }
-            this.Visible = on;
-            this.Invalidate();
-            this.Refresh();
+            OnState = on;
         }
 
     }

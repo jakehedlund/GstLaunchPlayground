@@ -77,6 +77,11 @@ namespace GstPlayground
         {
             while (true)
             {
+                if (!FlashEnabled)
+                {
+                    Thread.Sleep(10);
+                    continue;
+                }
                 try
                 {
                     var elapsed = DateTime.Now - lastFlash;

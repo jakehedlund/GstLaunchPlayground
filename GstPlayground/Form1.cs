@@ -110,6 +110,8 @@ namespace GstPlayground
         {
             if (mpipe != null)
             {
+                mpipe.SendEvent(Event.NewEos());
+                mpipe.Bus?.TimedPopFiltered((ulong)1e9, MessageType.Eos);
                 mpipe.SetState(State.Null);
                 mpipe.Dispose();
                 //glibLoop.Quit(); 
@@ -308,7 +310,8 @@ namespace GstPlayground
 
         private void btnReset_Click(object sender, EventArgs e)
         {
-            resetGst(); 
+            resetGst();
+            chkLatencyEnable2.Checked = false;
         }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)

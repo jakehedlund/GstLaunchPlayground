@@ -108,12 +108,18 @@ namespace GstPlayground
 
         private void resetGst()
         {
-            if (mpipe != null)
+            // If the clock is null, we've already shutdown so anything else is invalid. 
+            if (mpipe != null && mpipe.Clock != null)
             {
-                mpipe.SendEvent(Event.NewEos());
-                mpipe.Bus?.TimedPopFiltered((ulong)1e9, MessageType.Eos);
+                if (mpipe.CurrentState == State.Playing)
+                {
+                    mpipe.SendEvent(Event.NewEos());
+                    mpipe.Bus?.TimedPopFiltered((ulong)1e9, MessageType.Eos);
+                }
+
                 mpipe.SetState(State.Null);
                 mpipe.Dispose();
+                mpipe = null;
                 //glibLoop.Quit(); 
             }
 
@@ -134,6 +140,10 @@ namespace GstPlayground
                 Console.WriteLine($"GLib version: {glibInfo.FileVersion} ({glibInfo.FileName})" );
                 Console.WriteLine($"GTK version: {gtkInfo.FileVersion} ({gtkInfo.FileName})" );
 
+                var devmon = new DeviceMonitor();
+                //devmon.Bus.AddWatch(OnDevMsg);
+                devmon.AddFilter("Audio/Source", new Caps("audio/x-raw"));
+
                 if (glibThread != null && glibThread.IsAlive)
                 {
                     glibLoop.Quit(); 
@@ -151,6 +161,23 @@ namespace GstPlayground
                     //Priority = ThreadPriority.AboveNormal
                 };
 
+
+                if (!devmon.Start())
+                {
+                    Console.WriteLine("Error starting device monitor.");
+                    return;
+                }
+
+                foreach (var dev in devmon.Devices)
+                {
+                    Console.WriteLine($"Device found: {dev.DeviceClass} - {dev.DisplayName} - {dev.Name} ");
+                    if (dev.Properties.HasField("device.strid")) // find a connected audio source. 
+                    {
+                        Console.WriteLine("Device id: " + dev.Properties.GetString("device.strid"));
+                        break;
+                    }
+                }
+                devmon.Stop(); 
                 //glibThread.Start();
             }
             catch (BadImageFormatException bad)
@@ -198,6 +225,12 @@ namespace GstPlayground
                 MessageBox.Show(this, "Failed to launch, check your pipeline. " + ex.Message, "Fail", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 //DumpGraph(mpipe, "failtolink.dot"); 
             }
+        }
+
+        static bool OnDevMsg(Bus b, Gst.Message message)
+        {
+
+            return true;
         }
 
         private void exceptionManager_UnhandledException(GLib.UnhandledExceptionArgs args)
@@ -824,14 +857,15 @@ namespace GstPlayground
             StringBuilder sb = new StringBuilder();
             sb.Append("Use this tool to test a video camera's glass-to-glass (realtime) latency. " + Environment.NewLine);
             sb.AppendLine("0. Start a pipeline/launchline for a video camera in your posession.");
-            sb.AppendLine("1. Point camera at your screen and move the window so it can be seen by the camera.");
+            sb.AppendLine("1. Point camera at your screen and move the window so it can be seen by the camera. " +
+                "If you are using a built-in webcam, try using a mirror or second monitor. ");
             sb.AppendLine("2. Move cursor to hover over an area that changes color on the streamed image of the stream (first nested video image).");
             sb.AppendLine("3. Observe reported latency on the right side of the app.");
+            sb.AppendLine("4. Adjust your pipeline for the lowest acceptable latency. ");
 
             var ret = MessageBox.Show(this, sb.ToString(), "Latency test", MessageBoxButtons.OKCancel, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1);
 
             chkLatencyEnable2.Checked = DialogResult.OK == ret;
-
         }
 
         private void openConsoleToolStripMenuItem_Click(object sender, EventArgs e)
